@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>MiniLabel Studio</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <style>
+        :root {
+            --bg: #0f172a;
+            --card: #111827;
+            --primary: #6366f1;
+            --secondary: #22c55e;
+            --text: #e5e7eb;
+            --muted: #9ca3af;
+            --danger: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: "Inter", system-ui, sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #0f172a, #020617);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .app {
+            width: 900px;
+            max-width: 95%;
+            background: var(--card);
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            padding: 24px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        header span {
+            color: var(--primary);
+        }
+
+        .status {
+            font-size: 14px;
+            color: var(--secondary);
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background: #020617;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .card h2 {
+            font-size: 18px;
+            margin-bottom: 12px;
+        }
+
+        .item-text {
+            font-size: 16px;
+            line-height: 1.6;
+            color: var(--text);
+            margin-bottom: 16px;
+        }
+
+        .labels {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .label {
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: rgba(99, 102, 241, 0.15);
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 14px;
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            transition: all 0.2s ease;
+        }
+
+        .label:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .sidebar button {
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            font-size: 14px;
+            cursor: pointer;
+            background: var(--primary);
+            color: white;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar button.secondary {
+            background: rgba(34, 197, 94, 0.15);
+            color: var(--secondary);
+            border: 1px solid rgba(34, 197, 94, 0.4);
+        }
+
+        .sidebar button.secondary:hover {
+            background: var(--secondary);
+            color: black;
+        }
+
+        .sidebar button:hover {
+            transform: translateY(-1px);
+            opacity: 0.9;
+        }
+
+        footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 13px;
+            color: var(--muted);
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header>
+            <h1>Mini<span>Label</span> Studio</h1>
+            <div class="status">● API Connected</div>
+        </header>
+
+        <div class="content">
+            <div class="card">
+                <h2>Item to Label</h2>
+                <div class="item-text" id="itemText">
+                    Click “Load Item” to start labeling.
+                </div>
+
+                <div class="labels">
+                    <div class="label" onclick="labelItem('Positive')">Positive</div>
+                    <div class="label" onclick="labelItem('Neutral')">Neutral</div>
+                    <div class="label" onclick="labelItem('Negative')">Negative</div>
+                </div>
+            </div>
+
+            <div class="card sidebar">
+                <h2>Controls</h2>
+                <button onclick="loadItem()">Load Item</button>
+                <button class="secondary" onclick="skipItem()">Skip</button>
+            </div>
+        </div>
+
+        <footer>
+            MiniLabel Studio · FastAPI + MySQL
+        </footer>
+    </div>
+
+    <script>
+        let currentItemId = null;
+
+        async function loadItem() {
+            const res = await fetch("/api/items/unlabeled");
+            const data = await res.json();
+
+            if (data.length === 0) {
+                document.getElementById("itemText").innerText = "No unlabeled items 🎉";
+                return;
+            }
+
+            const item = data[0];
+            currentItemId = item.id;
+            document.getElementById("itemText").innerText = item.text;
+        }
+
+        async function labelItem(label) {
+            if (!currentItemId) {
+                alert("Load an item first");
+                return;
+            }
+
+            await fetch(`/api/items/${currentItemId}/annotation?label=${label}`, {
+                method: "PUT"
+            });
+
+            currentItemId = null;
+            loadItem();
+        }
+
+        function skipItem() {
+            currentItemId = null;
+            loadItem();
+        }
+    </script>
+</body>
+</html>
